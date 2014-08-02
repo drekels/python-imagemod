@@ -5,53 +5,58 @@ import logging
 
 
 VERSION = (0, 1, 1, 0)
+
+def get_version():
+    return ".".join([str(x) for x in VERSION])
+
 LOG = logging.getLogger(__name__)
 
 
-def _filter_pixel_cached(image_filter, r, g, b, a):
+def _mod_pixel_cached(modder, r, g, b, a):
     color = (r, g, b, a)
-    newcolor = image_filter._filters.get(color, None)
+    newcolor = modder._mods.get(color, None)
     if not newcolor:
-        newcolor = image_filter.filter_pixel(r, g, b, a)
-        image_filter._filters[color] = newcolor
+        newcolor = modder.mod_pixel(r, g, b, a)
+        modder._mods[color] = newcolor
     return newcolor
 
 
-_filter_pixels = np.vectorize(_filter_pixel_cached, excluded=["image_filter"])
+_mod_pixels = np.vectorize(_mod_pixel_cached, excluded=["modder"])
 
 
-class ImageFilter(object):
+class ImageModder(object):
+    position_idependant = True
 
     @classmethod
-    def filter_image(cls, img):
+    def modimage(cls, img):
         cls(img)
-        return cls.get_filtered()
+        return cls.get_mod()
 
     def __init__(self, img):
         self.image = img.mode == "RGBA" and img or img.convert("RGBA")
-        self._filters = {}
+        self._mods = {}
 
     def _pixel_count(self):
         return self.image.size[0] * self.image.size[1]
     pixel_count = property(_pixel_count)
 
-    def get_filtered(self):
+    def get_mod(self):
         self.analyze()
         self.draw()
-        return self.filter_image
+        return self.mod_image
 
-    filter_pixel_cached = _filter_pixel_cached
+    mod_pixel_cached = _mod_pixel_cached
 
-    def filter_pixels(self, r, g, b, a):
-        return np.array(_filter_pixels(self, r, g, b, a))
+    def mod_pixels(self, r, g, b, a):
+        return np.array(_mod_pixels(self, r, g, b, a))
 
-    def filter_pixel(self, r, g, b, a):
+    def mod_pixel(self, r, g, b, a):
         h, s, v = rgb_to_hsv(r, g, b)
-        nh, ns, nv, na = self.filter_pixel_hsv(h, s, v, a)
+        nh, ns, nv, na = self.mod_pixel_hsv(h, s, v, a)
         nr, ng, nb = hsv_to_rgb(nh, ns, nv)
         return (nr, ng, nb, na)
 
-    def filter_pixel_hsv(self, h, s, v, a):
+    def mod_pixel_hsv(self, h, s, v, a):
         raise NotImplementedError()
 
     def analyze(self):
@@ -60,6 +65,6 @@ class ImageFilter(object):
     def draw(self):
         arr = np.asarray(self.image).astype("float")
         arr = np.rollaxis(arr, -1)
-        result = self.filter_pixels(*arr)
+        result = self.mod_pixels(*arr)
         result = np.rollaxis(result, 0, len(result.shape)).astype("uint8")
-        self.filter_image = Image.fromarray(result, "RGBA")
+        self.mod_image = Image.fromarray(result, "RGBA")

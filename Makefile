@@ -1,13 +1,17 @@
-PYTHON_FILES = $(shell find pykfs -name \*.py)
+DISTRIBUTION_NAME := imagemod
+IGNORE_DIRECTORY := ignore
 
-SAMPLE_ENV := ignore/pykfsSampleEnv
+PYTHON_FILES = $(shell find $(DISTRIBUTION_NAME) -name \*.py)
+
+SAMPLE_ENV := $(IGNORE_DIRECTORY)/$(DISTRIBUTION_NAME)SampleEnv
 SAMPLE_ENV_PIP := $(SAMPLE_ENV)/bin/pip
 SAMPLE_ENV_PYTHON := $(SAMPLE_ENV)/bin/python
 
-TEST_ENV := ignore/pykfsTestEnv
+TEST_ENV := $(IGNORE_DIRECTORY)/$(DISTRIBUTION_NAME)TestEnv
 TEST_ENV_PIP := $(TEST_ENV)/bin/pip
 TEST_ENV_NOSE := $(TEST_ENV)/bin/nosetests
 
+DIST_DIR := dist/
 
 dist: setup.py $(PYTHON_FILES) requirements.txt README MANIFEST.in MAKEFILE
 	rm -f -r dist
@@ -15,14 +19,14 @@ dist: setup.py $(PYTHON_FILES) requirements.txt README MANIFEST.in MAKEFILE
 
 .PHONY: sampleEnv
 sampleEnv: $(SAMPLE_ENV)
-$(SAMPLE_ENV): dist ignore
+$(SAMPLE_ENV): dist $(IGNORE_DIRECTORY)
 	rm -f -r $(SAMPLE_ENV)
 	virtualenv $(SAMPLE_ENV) --no-site-packages
-	$(SAMPLE_ENV_PIP) install dist/pykfs*
+	$(SAMPLE_ENV_PIP) install $(DIST_DIR)/$(DISTRIBUTION_NAME)*
 
 .PHONY: testEnv
 testEnv: $(TEST_ENV) 
-$(TEST_ENV): requirements.txt MAKEFILE ignore
+$(TEST_ENV): requirements.txt MAKEFILE $(IGNORE_DIRECTORY)
 	rm -f -r $(TEST_ENV)
 	virtualenv $(TEST_ENV) --no-site-packages
 	$(TEST_ENV_PIP) install -r requirements.txt
@@ -32,8 +36,7 @@ $(TEST_ENV): requirements.txt MAKEFILE ignore
 
 .PHONY: clean
 clean:
-	rm -f -r pykfs.egg-info build dist MANIFEST $(SAMPLE_ENV) $(TEST_ENV)
-	
+	rm -f -r $(DISTRIBUTION_NAME).egg-info build dist MANIFEST $(SAMPLE_ENV) $(TEST_ENV)
 
 .PHONY: pyshell
 pyshell: $(SAMPLE_ENV)
@@ -47,5 +50,5 @@ test: $(TEST_ENV)
 debug: $(TEST_ENV)
 	$(TEST_ENV_NOSE) -s
 
-ignore:
-	mkdir ignore
+$(IGNORE_DIRECTORY):
+	mkdir $(IGNORE_DIRECTORY)
