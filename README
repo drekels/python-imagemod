@@ -1,0 +1,32 @@
+Image modification using the Pillow library
+
+https://github.com/drekels/python-imagemod
+
+This repo contains the imagemod module, which allows modifying of images.
+
+Features:
+* Alter image pixels based on original values.
+
+
+Dependencies
+------------
+
+See requirements.txt
+
+
+Usage
+-----
+
+pip install --upgrade git+https://github.com/drekels/python-imagemod.git@STABLE
+
+
+Known Issues
+------------
+
+No known issues (mostly due to ignorance)
+
+
+Thanks
+------
+
+No one to thank yet.
